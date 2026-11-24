@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conference organiser dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#EDF0F4;--surface:#fff;--ink:#14202B;--muted:#5B6B7A;--line:#D8DFE7;--teal:#0E7C7B;--indigo:#4651C9;--amber:#B97A0A;--coral:#C8452F;--soft:#F6F8FA;--r:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0F1720;--surface:#18222D;--ink:#E7EDF3;--muted:#98A8B8;--line:#2A3745;--teal:#3FBDBB;--indigo:#8E98F2;--amber:#E8A93A;--coral:#F0806B;--soft:#1D2936}}
+:root[data-theme=dark]{--bg:#0F1720;--surface:#18222D;--ink:#E7EDF3;--muted:#98A8B8;--line:#2A3745;--teal:#3FBDBB;--indigo:#8E98F2;--amber:#E8A93A;--coral:#F0806B;--soft:#1D2936}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+h1{font-size:26px;line-height:1.2;margin:0;font-weight:600;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:2px 0 0}
+.count{display:flex;align-items:baseline;gap:8px}
+.count b{font-size:34px;font-weight:600;line-height:1;color:var(--teal)}
+.count span{color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.kpi .n{font-size:26px;font-weight:600;line-height:1.1}
+.kpi .l{color:var(--muted);font-size:13px}
+.kpi .d{font-size:13px;margin-top:6px}
+.bar{height:6px;background:var(--soft);border-radius:3px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--teal);border-radius:3px}
+h2{font-size:16px;margin:0 0 2px;font-weight:600}
+.hint{color:var(--muted);font-size:13px;margin:0 0 12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.tabs{display:flex;gap:4px;background:var(--soft);padding:3px;border-radius:8px}
+.tabs button{border:0;background:none;padding:5px 12px;border-radius:6px;cursor:pointer;color:var(--muted)}
+.tabs button[aria-pressed=true]{background:var(--surface);color:var(--ink);font-weight:500;box-shadow:0 0 0 1px var(--line)}
+.scroll{overflow-x:auto}
+.sched{min-width:780px}
+.axis{display:grid;grid-template-columns:84px 1fr;color:var(--muted);font-size:12px}
+.ticks{position:relative;height:20px}
+.ticks span{position:absolute;transform:translateX(-50%)}
+.lane{display:grid;grid-template-columns:84px 1fr;align-items:stretch;border-top:1px solid var(--line)}
+.lane .rn{padding:10px 0;font-weight:500;font-size:13px}
+.track{position:relative;height:74px;background-image:linear-gradient(to right,var(--line) 1px,transparent 1px);background-size:10% 100%}
+.blk{position:absolute;top:8px;bottom:8px;border-radius:6px;padding:5px 8px;font-size:12px;line-height:1.3;overflow:hidden;cursor:pointer;text-align:left;border:1.5px solid var(--c);background:var(--c);color:#fff}
+.blk.pending{background:var(--surface);color:var(--ink);border-style:dashed}
+.blk b{display:block;font-weight:500}
+.blk[aria-pressed=true]{outline:2px solid var(--ink);outline-offset:1px}
+.detail{margin-top:12px;padding:12px 14px;background:var(--soft);border-radius:8px;font-size:14px;min-height:64px}
+.key{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.key i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px;background:var(--teal)}
+.key i.p{background:none;border:1.5px dashed var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+svg{width:100%;height:auto;display:block}
+.ax{stroke:var(--line)}
+.lbl{fill:var(--muted);font-size:11px}
+.tk{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line)}
+.tk input{margin-top:4px;width:16px;height:16px;accent-color:var(--teal)}
+.tk label{flex:1;cursor:pointer}
+.tk.done label{color:var(--muted);text-decoration:line-through}
+.tk small{display:block;color:var(--muted)}
+.late{color:var(--coral);font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-weight:500;color:var(--muted);padding:6px 8px 6px 0;font-size:13px}
+td{padding:8px 8px 8px 0;border-top:1px solid var(--line)}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;border:1px solid currentColor}
+.ok{color:var(--teal)}.wait{color:var(--amber)}.bad{color:var(--coral)}
+select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+.bud{margin:10px 0}
+.bud div:first-child{display:flex;justify-content:space-between;font-size:14px}
+.bud .bar{height:8px}
+.over i{background:var(--coral)}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .4s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Lion City Tech Summit 2027</h1>
+    <p class="sub">9–11 March 2027 · Marina Bay Convention Centre · sample data, edit the arrays in the script to use your own</p>
+  </div>
+  <div class="count"><b id="days">0</b><span>days until doors open</span></div>
+</header>
+
+<section class="kpis" id="kpis" aria-label="Key numbers"></section>
+
+<section class="card" aria-labelledby="sh">
+  <div class="row">
+    <div><h2 id="sh">Run of show</h2><p class="hint" style="margin:0">Select a session to see who is speaking and how full it is.</p></div>
+    <div class="tabs" id="tabs" role="group" aria-label="Conference day"></div>
+  </div>
+  <div class="scroll"><div class="sched" id="sched"></div></div>
+  <div class="key"><span><i></i>Confirmed</span><span><i class="p"></i>Speaker not yet confirmed</span></div>
+  <div class="detail" id="detail" aria-live="polite">No session selected.</div>
+</section>
+
+<div class="grid">
+  <section class="card"><h2>Registrations by week</h2><p class="hint">Running total against the 1,500 capacity.</p><div id="chart"></div></section>
+  <section class="card"><h2>Ticket mix</h2><p class="hint">Share of registrations by ticket type.</p><div id="mix"></div></section>
+  <section class="card"><h2>Open tasks</h2><p class="hint" id="tp"></p><div id="tasks"></div></section>
+  <section class="card"><h2>Budget</h2><p class="hint">Spent so far against what is allocated, in SGD.</p><div id="budget"></div></section>
+</div>
+
+<section class="card" style="margin-top:12px">
+  <div class="row"><div><h2>Speakers</h2><p class="hint" style="margin:0" id="sc"></p></div>
+    <label>Show <select id="sf"><option value="all">All speakers</option><option value="Confirmed">Confirmed</option><option value="Awaiting reply">Awaiting reply</option><option value="Travel pending">Travel pending</option></select></label></div>
+  <div class="scroll"><table><thead><tr><th>Name</th><th>Session</th><th>Status</th></tr></thead><tbody id="sp"></tbody></table></div>
+</section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>n.toLocaleString("en-SG");
+const rooms=[["Main Hall","var(--teal)"],["Hall B","var(--indigo)"],["Studio","var(--amber)"]];
+// day, room, start, end (24h decimals), title, speaker, speaker status, registered, capacity
+const S=[
+[1,0,9,10,"Opening keynote: building for the next decade","Aisha Rahman","Confirmed",1020,1200],
+[1,0,10.5,12,"Panel: funding in Southeast Asia","Wei Jie Tan","Confirmed",760,1200],
+[1,0,13.5,15,"Fireside chat with a regional founder","Daniel Ong","Awaiting reply",640,1200],
+[1,1,9.5,11,"Workshop: shipping data products","Priya Nair","Confirmed",96,120],
+[1,1,11.5,13,"Talk: security for small teams","Lucas Meyer","Travel pending",84,120],
+[1,1,14,16,"Workshop: design systems that last","Mei Ling Koh","Confirmed",110,120],
+[1,2,10,11,"Demo hour: early-stage startups","Various","Confirmed",58,80],
+[1,2,14.5,16,"Roundtable: hiring across borders","Farah Aziz","Awaiting reply",41,80],
+[2,0,9,10.5,"Keynote: AI in the real economy","Dr. Ravi Menon","Confirmed",1110,1200],
+[2,0,11,12.5,"Panel: sustainability and infrastructure","Grace Lim","Confirmed",720,1200],
+[2,0,14,15.5,"Talk: the future of payments","Hiro Tanaka","Travel pending",690,1200],
+[2,1,9.5,11,"Workshop: prompt design in practice","Sofia Alvarez","Confirmed",118,120],
+[2,1,13,15,"Workshop: accessible product design","Jun Hao Lee","Confirmed",72,120],
+[2,2,10.5,12,"Roundtable: women in engineering","Nur Syafiqah","Confirmed",66,80],
+[2,2,15,16.5,"Pitch practice with investors","Marcus Teo","Awaiting reply",52,80],
+[3,0,9.5,11,"Closing keynote: what comes next","Elena Petrova","Confirmed",930,1200],
+[3,0,11.5,12.5,"Awards and closing remarks","Aisha Rahman","Confirmed",880,1200],
+[3,1,9,10.5,"Workshop: running open source projects","Tomás Rivera","Awaiting reply",64,120],
+[3,2,10,11.5,"Community meetup showcase","Local chapters","Confirmed",47,80]
+];
+const T=[["Standard",684,"var(--indigo)"],["Early bird",312,"var(--teal)"],["Student",148,"var(--amber)"],["Speaker and sponsor",96,"var(--coral)"],["Group of 5 or more",44,"var(--muted)"]];
+const reg=[40,95,160,240,330,430,540,650,760,860,960,1060,1180,1284];
+const B=[["Venue and catering",210000,184500],["Speaker travel and stay",60000,41200],["Marketing",45000,47800],["AV and production",52000,26000],["Staff and volunteers",28000,9400]];
+const K=[
+["Ask Wei Jie Tan to confirm the funding panel moderator","Due 28 Nov",0],
+["Send visa invitation letters to overseas speakers","Overdue by 3 days",0],
+["Lock the catering headcount with the venue","Due 5 Dec",0],
+["Publish the final schedule on the website","Due 10 Dec",0],
+["Sign off the sponsor booth floor plan","Done",1],
+["Print badge stock and lanyards","Due 15 Jan",0]
+];
+let day=1,sel=null;
+// days left
+const open=new Date("2027-03-09T09:00:00+08:00");
+$("days").textContent=Math.max(0,Math.ceil((open-new Date())/864e5));
+// KPIs
+const registered=reg[reg.length-1],spent=B.reduce((a,b)=>a+b[2],0),alloc=B.reduce((a,b)=>a+b[1],0);
+const confirmed=S.filter(s=>s[6]==="Confirmed").length;
+const kp=[
+["Registered",fmt(registered),`${fmt(1500-registered)} places left`,registered/1500],
+["Sessions with confirmed speakers",`${confirmed} of ${S.length}`,`${S.length-confirmed} still need attention`,confirmed/S.length],
+["Budget used","S$"+fmt(spent),`of S$${fmt(alloc)} allocated`,spent/alloc],
+["Tasks done","1 of "+K.length,"1 task is overdue",1/K.length]];
+$("kpis").innerHTML=kp.map(k=>`<div class="card kpi"><div class="l">${k[0]}</div><div class="n">${k[1]}</div><div class="d">${k[2]}</div><div class="bar"><i style="width:${Math.round(k[3]*100)}%"></i></div></div>`).join("");
+// Schedule
+const hm=h=>{const m=Math.round((h%1)*60);return Math.floor(h)+":"+String(m).padStart(2,"0")};
+function drawTabs(){
+  $("tabs").innerHTML=[1,2,3].map(d=>`<button aria-pressed="${d===day}" data-d="${d}">Day ${d}</button>`).join("");
+  $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{day=+b.dataset.d;sel=null;drawTabs();drawSched();$("detail").textContent="No session selected."});
+}
+function drawSched(){
+  let h=`<div class="axis"><div></div><div class="ticks">`;
+  for(let t=8;t<=18;t+=2)h+=`<span style="left:${(t-8)*10}%">${t}:00</span>`;
+  h+="</div></div>";
+  rooms.forEach((r,ri)=>{
+    h+=`<div class="lane"><div class="rn">${r[0]}</div><div class="track">`;
+    S.forEach((s,i)=>{if(s[0]===day&&s[1]===ri)h+=`<button class="blk${s[6]==="Confirmed"?"":" pending"}" style="--c:${r[1]};left:${(s[2]-8)*10}%;width:${(s[3]-s[2])*10}%" data-i="${i}" aria-pressed="${sel===i}"><b>${s[4]}</b>${hm(s[2])}–${hm(s[3])}</button>`});
+    h+="</div></div>";
+  });
+  $("sched").innerHTML=h;
+  $("sched").querySelectorAll(".blk").forEach(b=>b.onclick=()=>{sel=+b.dataset.i;const s=S[sel];
+    $("detail").innerHTML=`<b>${s[4]}</b><br>${rooms[s[1]][0]}, ${hm(s[2])}–${hm(s[3])} · ${s[5]} (${s[6].toLowerCase()})<br>${s[7]} of ${s[8]} places taken (${Math.round(s[7]/s[8]*100)}%)`;
+    drawSched()});
+}
+// Chart
+(function(){
+  const W=600,H=220,p={l:40,r:10,t:10,b:26},max=1500,n=reg.length;
+  const x=i=>p.l+i*(W-p.l-p.r)/(n-1),y=v=>H-p.b-v/max*(H-p.t-p.b);
+  let g="";
+  [0,500,1000,1500].forEach(v=>g+=`<line class="ax" x1="${p.l}" x2="${W-p.r}" y1="${y(v)}" y2="${y(v)}"/><text class="lbl" x="${p.l-6}" y="${y(v)+4}" text-anchor="end">${fmt(v)}</text>`);
+  [0,4,8,13].forEach(i=>g+=`<text class="lbl" x="${x(i)}" y="${H-8}" text-anchor="middle">Wk ${i+1}</text>`);
+  const pts=reg.map((v,i)=>`${x(i)},${y(v)}`).join(" ");
+  g+=`<polygon points="${p.l},${y(0)} ${pts} ${x(n-1)},${y(0)}" fill="var(--teal)" opacity=".12"/><polyline points="${pts}" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linejoin="round"/><circle cx="${x(n-1)}" cy="${y(reg[n-1])}" r="4" fill="var(--teal)"/>`;
+  $("chart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Registrations rose to ${registered} over ${n} weeks">${g}</svg>`;
+})();
+// Mix
+(function(){const tot=T.reduce((a,t)=>a+t[1],0);
+  $("mix").innerHTML=T.map(t=>`<div class="bud"><div><span>${t[0]}</span><span>${fmt(t[1])} (${Math.round(t[1]/tot*100)}%)</span></div><div class="bar"><i style="width:${t[1]/tot*100}%;background:${t[2]}"></i></div></div>`).join("");})();
+// Budget
+$("budget").innerHTML=B.map(b=>{const pc=b[2]/b[1],o=pc>1;return `<div class="bud${o?" over":""}"><div><span>${b[0]}</span><span class="${o?"bad":""}">S$${fmt(b[2])} of S$${fmt(b[1])}${o?" · over":""}</span></div><div class="bar"><i style="width:${Math.min(100,pc*100)}%"></i></div></div>`}).join("");
+// Tasks
+function drawTasks(){
+  const d=K.filter(k=>k[2]).length;
+  $("tp").textContent=`${d} of ${K.length} done`;
+  $("tasks").innerHTML=K.map((k,i)=>`<div class="tk${k[2]?" done":""}"><input type="checkbox" id="t${i}" ${k[2]?"checked":""}><label for="t${i}">${k[0]}<small class="${k[1].startsWith("Overdue")&&!k[2]?"late":""}">${k[1]}</small></label></div>`).join("");
+  $("tasks").querySelectorAll("input").forEach((c,i)=>c.onchange=()=>{K[i][2]=c.checked?1:0;if(c.checked&&K[i][1]!=="Done")K[i][1]="Done";drawTasks()});
+}
+// Speakers
+function drawSp(){
+  const f=$("sf").value,seen={},rows=[];
+  S.forEach(s=>{const k=s[5]+s[4];if(seen[k]||(f!=="all"&&s[6]!==f))return;seen[k]=1;rows.push(s)});
+  $("sc").textContent=`${rows.length} shown`;
+  const cls={"Confirmed":"ok","Awaiting reply":"wait","Travel pending":"bad"};
+  $("sp").innerHTML=rows.map(s=>`<tr><td>${s[5]}</td><td>${s[4]}</td><td><span class="tag ${cls[s[6]]}">${s[6]}</span></td></tr>`).join("");
+}
+$("sf").onchange=drawSp;
+drawTabs();drawSched();drawTasks();drawSp();
+</script>
+</body>
+</html>
